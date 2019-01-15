@@ -4,6 +4,15 @@ import Handlers from "../../component/Form/Handlers";
 
 class AddFriends extends Component {
   render() {
+
+    const validateField = {
+      [`myName`]: '',
+      [`friend-${0}`]: '',
+      [`email-${0}`]: '',
+      [`number-${0}`]: '',
+      [`location-${0}`]: ''
+    };
+
     const initialValues = {
       myName: "",
       addFriend: [
@@ -13,12 +22,13 @@ class AddFriends extends Component {
           number: "",
           location: ""
         }
-      ]
+      ],
     };
 
     return (
       <Handlers
         initialValues={initialValues}
+        validateField={validateField}
         onSubmit={values => alert(JSON.stringify(values, null, 2))}
       >
         {({
@@ -29,7 +39,8 @@ class AddFriends extends Component {
           addForm,
           removeForm,
           shouldMarkError,
-          disableSubmit
+          disableSubmit,
+          index
         }) => (
           <div className="form_size">
             <h3>Welcome click to add friend</h3>
@@ -40,11 +51,13 @@ class AddFriends extends Component {
                 name="myName"
                 value={values.myName}
                 divClass="form-group mb-2"
-                inputClass={`form-control ${shouldMarkError('myName') ? "error" : ''}`}
+                inputClass={`form-control ${
+                  shouldMarkError("myName") ? "error" : ""
+                }`}
                 placeholder="Your Name"
                 onChange={handleInputChange}
                 onBlur={handleBlur}
-                errorMessage={'Name is required'}
+                errorMessage={"Name is required"}
               />
               {values.addFriend.map((_, idx) => (
                 <div key={idx}>
@@ -54,24 +67,28 @@ class AddFriends extends Component {
                     name={`friend-${idx}`}
                     value={values.addFriend[idx].friend}
                     divClass="form-group mb-2"
-                    inputClass={`form-control ${shouldMarkError(`friend-${idx}`) ? "error" : ''}`}
+                    inputClass={`form-control ${
+                      shouldMarkError(`friend-${idx}`) ? "error" : ""
+                    }`}
                     placeholder="Friend"
                     onChange={e => handleInputChange(e, "addFriend")}
                     onBlur={handleBlur}
-                    errorMessage={'Friend name is value'}
+                    errorMessage={"Friend name is value"}
                   />
-              
+
                   <Input
                     label={`email-${idx}`}
                     type="text"
                     name={`email-${idx}`}
                     value={values.addFriend[idx].email}
                     divClass="form-group"
-                    inputClass={`form-control ${shouldMarkError(`email-${idx}`) ? "error" : ''}`}
+                    inputClass={`form-control ${
+                      shouldMarkError(`email-${idx}`) ? "error" : ""
+                    }`}
                     placeholder="Email address"
                     onChange={e => handleInputChange(e, "addFriend")}
                     onBlur={handleBlur}
-                    errorMessage={'Email is needed here'}
+                    errorMessage={"Email is needed here"}
                   />
                   <Input
                     label={`number-${idx}`}
@@ -79,11 +96,13 @@ class AddFriends extends Component {
                     name={`number-${idx}`}
                     value={values.addFriend[idx].number}
                     divClass="form-group"
-                    inputClass={`form-control ${shouldMarkError(`number-${idx}`) ? "error" : ''}`}
+                    inputClass={`form-control ${
+                      shouldMarkError(`number-${idx}`) ? "error" : ""
+                    }`}
                     placeholder="Phone Number"
                     onChange={e => handleInputChange(e, "addFriend")}
                     onBlur={handleBlur}
-                    errorMessage={'You have to input a value'}
+                    errorMessage={"You have to input a value"}
                   />
 
                   <Input
@@ -92,11 +111,13 @@ class AddFriends extends Component {
                     name={`location-${idx}`}
                     value={values.addFriend[idx].location}
                     divClass="form-group"
-                    inputClass={`form-control ${shouldMarkError(`location-${idx}`) ? "error" : ''}`}
+                    inputClass={`form-control ${
+                      shouldMarkError(`location-${idx}`) ? "error" : ""
+                    }`}
                     placeholder="location"
                     onChange={e => handleInputChange(e, "addFriend")}
                     onBlur={handleBlur}
-                    errorMessage={'You have to input a value'}
+                    errorMessage={"You have to input a value"}
                   />
 
                   <div className="radio_style">
@@ -114,7 +135,7 @@ class AddFriends extends Component {
                     type="button"
                     disabled={false}
                     buttonClass="btn btn-primary"
-                    onClick={() => removeForm(idx, 'addFriend')}
+                    onClick={() => removeForm(idx, "addFriend")}
                   />
                 </div>
               ))}

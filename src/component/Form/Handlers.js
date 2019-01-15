@@ -1,12 +1,14 @@
-import React, { Component } from "react";
+import { Component } from "react";
 
 class Handlers extends Component {
   state = {
     values: this.props.initialValues || {},
     touched: {},
-    empty: {},
+    empty: this.props.validateField || {},
     disableSubmit: true,
-    inputValues: {}
+    inputValues: {},
+    submissionCount: 0,
+    index: 0
   };
 
   handleInputChange = (e, myArray) => {
@@ -17,99 +19,140 @@ class Handlers extends Component {
       const id = name.split("-")[1];
       let newArray = [...this.state.values[myArray]];
       newArray[id][inputName] = value;
-      this.setState(prevState => ({
-        values: {
-          ...prevState.values,
-          [myArray]: newArray,
-        },
-        inputValues: {
-          ...prevState.inputValues,
-          [name]: value
-        }
-      }),this.canSubmit());
+      this.setState(
+        prevState => ({
+          values: {
+            ...prevState.values,
+            [myArray]: newArray
+          },
+          inputValues: {
+            ...prevState.inputValues,
+            [name]: value
+          }
+        }),
+        this.canSubmit()
+      );
     } else {
       const value =
         e.target.type === "checkbox" ? e.target.checked : e.target.value;
-      this.setState(prevState => ({
-        values: {
-          ...prevState.values,
-          [name]: value
-        },
-        inputValues: {
-          ...prevState.inputValues,
-          [name]: value
-        }
-      }), this.canSubmit());
+      this.setState(
+        prevState => ({
+          values: {
+            ...prevState.values,
+            [name]: value
+          },
+          inputValues: {
+            ...prevState.inputValues,
+            [name]: value
+          }
+        }),
+        this.canSubmit()
+      );
     }
   };
 
-  canSubmit = () => {
-   const { empty } = this.state; 
-    const isDisabled = Object.keys(empty).some(x => empty[x]);
-    console.log(isDisabled, 'isDisabled')
-    this.setState({ disableSubmit: !isDisabled })
-  }
-
   handleBlur = e => {
     const { name } = e.target;
-    e.persist();
-    this.setState(prevState => ({
-      touched: {
-        ...prevState.touched,
-        [name]: true
-      },
-      empty: {
-        ...prevState.empty,
-        [name]: this.state.inputValues[name] === undefined || this.state.inputValues[name].length === 0 ? true : false,
-      },
-    }),this.canSubmit());
+    this.setState(
+      prevState => ({
+        touched: {
+          ...prevState.touched,
+          [name]: true
+        },
+        empty: {
+          ...prevState.empty,
+          [name]:
+            this.state.inputValues[name] === undefined ||
+            this.state.inputValues[name].length === 0
+              ? true
+              : false
+        }
+      }),
+      this.canSubmit()
+    );
+  };
+
+  canSubmit = () => {
+    const { empty } = this.state;
+    const keys = Object.keys(empty);
+    const isDisabled = keys.map((x, y) => {
+      const arr = empty[x] === '' || true ? true : null;
+      return arr;
+    });
+    console.log(isDisabled)
+    const checkArray = isDisabled.includes(true);
+    console.log(checkArray)
+    // if (checkArray === false) {
+      this.setState({ disableSubmit: checkArray });
+    // }
   };
 
   handleSubmit = event => {
     event.preventDefault();
-    this.props.onSubmit(this.state.values);
-    console.log(this.state)
+    const { submissionCount } = this.state;
+    this.setState(
+      {
+        submissionCount: submissionCount + 1
+      },
+      () => {
+        console.log(this.state, "submissionCount");
+      },
+      this.props.onSubmit(this.state)
+    );
+  };
+
+  addNewValues = () => {
+    let { empty, index } = this.state;
+    const keys = Object.keys(empty);
+    const removeItem = keys.filter(
+      (values, _) => values.split("-")[1] !== undefined
+    );
+    const addValues = removeItem.map((values, id) => {
+      const item = values.split("-")[0];
+      const addIndex = { [`${item}-${index + 1}`]: "" };
+      return addIndex;
+    });
+    const combine = Object.assign({}, ...addValues);
+    return combine;
   };
 
   addForm = (more, myArray) => {
-    let { values } = this.state;
-   const getDefaultTripStateValues =  ({
-      [`friend-${0}`]: '',
-      [`email-${0}`]: '',
-      [`number-${0}`]: '',
-      [`location-${0}`]: '',
-    })
-    this.setState(prevState => ({
+    let { values, index, empty } = this.state;
+    const newValues = this.addNewValues();
+    this.setState({
+      index: index + 1,
       values: {
         ...values,
-        [myArray]: [...prevState.values[myArray], more],
-      }, inputValues: {
-        ...prevState.inputValues,
-        ...getDefaultTripStateValues
+        [myArray]: [...values[myArray], more]
+      },
+      empty: {
+        ...empty,
+        ...newValues
       }
-    }));
+    });
   };
 
   removeForm = (index, value) => {
-    const removeForm = this.state.values[value].filter((_, id) => id !== index);
-    
-    this.setState(prevState => ({
+    const { values, empty } = this.state;
+    const removeForm = values[value].filter((_, id) => id !== index);
+
+    const keys = Object.keys(empty);
+    const removeItem = keys.filter((value, _) => value.split("-")[1] != index);
+    console.log(removeItem);
+    this.setState({
       values: {
-        ...prevState.values,
+        ...values,
         [value]: removeForm
       }
-    }));
-    console.log(removeForm);
+    });
   };
 
-
- shouldMarkError = field => {
+  shouldMarkError = field => {
     const errors = this.state.empty;
     const hasError = errors[field];
     const shouldShow = this.state.touched;
     return hasError ? shouldShow : false;
   };
-
 
   render() {
     return this.props.children({
