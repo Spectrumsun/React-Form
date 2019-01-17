@@ -82,21 +82,16 @@ class Handlers extends Component {
     console.log(isDisabled)
     const checkArray = isDisabled.includes(true);
     console.log(checkArray)
-    // if (checkArray === false) {
       this.setState({ disableSubmit: checkArray });
-    // }
   };
 
   handleSubmit = event => {
     event.preventDefault();
     const { submissionCount } = this.state;
-    this.setState(
-      {
+    this.setState({
         submissionCount: submissionCount + 1
-      },
-      () => {
-        console.log(this.state, "submissionCount");
-      },
+      },() => {
+        console.log(this.state, "submissionCount");},
       this.props.onSubmit(this.state)
     );
   };
@@ -135,7 +130,6 @@ class Handlers extends Component {
   removeForm = (index, value) => {
     const { values, empty } = this.state;
     const removeForm = values[value].filter((_, id) => id !== index);
-
     const keys = Object.keys(empty);
     const removeItem = keys.filter((value, _) => value.split("-")[1] != index);
     console.log(removeItem);
