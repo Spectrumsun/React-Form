@@ -1,4 +1,5 @@
-import { Component } from "react";
+import React, { Component } from "react";
+import ShowSuggestionsDropDown from "./showSuggestionsDropDown";
 
 class Handlers extends Component {
   state = {
@@ -8,25 +9,39 @@ class Handlers extends Component {
     disableSubmit: true,
     inputValues: {},
     submissionCount: 0,
-    index: 0
+    validateValues: this.props.validateField || {},
+    index: 0,
+    arrayName: this.props.arrayName || "",
+    autoComplete: {
+      activeSuggestion: 0,
+      filteredSuggestions: [],
+      showSuggestions: false,
+      inputName: "",
+      userInput: ""
+    }
   };
 
-  handleInputChange = (e, myArray) => {
+  handleInputChange = e => {
     const { name, value } = e.target;
+    const { arrayName } = this.state;
     e.persist();
     if (name.split("-")[1]) {
       const inputName = name.split("-")[0];
       const id = name.split("-")[1];
-      let newArray = [...this.state.values[myArray]];
+      let newArray = [...this.state.values[arrayName]];
       newArray[id][inputName] = value;
       this.setState(
         prevState => ({
           values: {
             ...prevState.values,
-            [myArray]: newArray
+            [arrayName]: newArray
           },
           inputValues: {
             ...prevState.inputValues,
+            [name]: value
+          },
+          validateValues: {
+            ...prevState.validateValues,
             [name]: value
           }
         }),
@@ -43,6 +58,10 @@ class Handlers extends Component {
           },
           inputValues: {
             ...prevState.inputValues,
+            [name]: value
+          },
+          validateValues: {
+            ...prevState.validateValues,
             [name]: value
           }
         }),
@@ -73,79 +92,184 @@ class Handlers extends Component {
   };
 
   canSubmit = () => {
-    const { empty } = this.state;
-    const keys = Object.keys(empty);
-    const isDisabled = keys.map((x, y) => {
-      const arr = empty[x] === '' || true ? true : null;
-      return arr;
+    const { validateValues } = this.state;
+    const isDisabled = Object.keys(validateValues).map(
+      (key, _) => validateValues[key].length === 0
+    );
+    this.setState({
+      disableSubmit: isDisabled.includes(true)
     });
-    console.log(isDisabled)
-    const checkArray = isDisabled.includes(true);
-    console.log(checkArray)
-      this.setState({ disableSubmit: checkArray });
   };
 
   handleSubmit = event => {
     event.preventDefault();
-    const { submissionCount } = this.state;
-    this.setState({
-        submissionCount: submissionCount + 1
-      },() => {
-        console.log(this.state, "submissionCount");},
+    this.setState(
+      prevState => ({
+        submissionCount: prevState.submissionCount + 1
+      }),
+      console.log(JSON.stringify(this.state, null, 2)),
       this.props.onSubmit(this.state)
     );
   };
 
   addNewValues = () => {
     let { empty, index } = this.state;
-    const keys = Object.keys(empty);
-    const removeItem = keys.filter(
+    const removeItem = Object.keys(empty).filter(
       (values, _) => values.split("-")[1] !== undefined
     );
-    const addValues = removeItem.map((values, id) => {
-      const item = values.split("-")[0];
-      const addIndex = { [`${item}-${index + 1}`]: "" };
-      return addIndex;
+    const addValues = removeItem.map((values, _) => {
+      return { [`${values.split("-")[0]}-${index + 1}`]: "" };
     });
-    const combine = Object.assign({}, ...addValues);
-    return combine;
+    return Object.assign({}, ...addValues);
   };
 
-  addForm = (more, myArray) => {
-    let { values, index, empty } = this.state;
+  addForm = more => {
+    let { values, empty, validateValues, arrayName } = this.state;
     const newValues = this.addNewValues();
-    this.setState({
-      index: index + 1,
+    this.setState(
+      prevState => ({
+        index: prevState.index + 1,
+        disableSubmit: true,
+        values: {
+          ...prevState.values,
+          [arrayName]: [...values[arrayName], more]
+        },
+        empty: {
+          ...empty,
+          ...newValues
+        },
+        validateValues: {
+          ...validateValues,
+          ...newValues
+        }
+      }),
+      this.canSubmit()
+    );
+  };
+
+  handleAutocomplete = (e, suggestions) => {
+    const { name, value, type, checked } = e.currentTarget;
+    const typeValues = type === "checkbox" ? checked : value;
+    const filteredSuggestions = suggestions.filter(
+      suggestion => suggestion.toLowerCase().indexOf(value.toLowerCase()) > -1
+    );
+    this.setState(prevState => ({
       values: {
-        ...values,
-        [myArray]: [...values[myArray], more]
+        ...prevState.values,
+        [name]: typeValues
       },
-      empty: {
-        ...empty,
-        ...newValues
+      autoComplete: {
+        ...prevState.autoComplete,
+        activeSuggestion: 0,
+        filteredSuggestions,
+        showSuggestions: true,
+        userInput: typeValues,
+        inputName: name
       }
-    });
+    }));
+  };
+
+  handleSuggestionClick = e => {
+    const { innerText } = e.currentTarget;
+    const { inputName } = this.state.autoComplete;
+    this.setState(prevState => ({
+      autoComplete: {
+        ...prevState.autoComplete,
+        activeSuggestion: 0,
+        filteredSuggestions: [],
+        showSuggestions: false,
+        userInput: innerText
+      },
+      values: {
+        ...prevState.values,
+        [inputName]: innerText
+      }
+    }));
+  };
+
+  ShowSuggestionsDropDown = () => {
+    const {
+      showSuggestions,
+      filteredSuggestions,
+      activeSuggestion,
+      userInput
+    } = this.state.autoComplete;
+    return (
+      <ShowSuggestionsDropDown
+        filteredSuggestions={filteredSuggestions}
+        activeSuggestion={activeSuggestion}
+        handleSuggestionClick={this.handleSuggestionClick}
+        userInput={userInput}
+        showSuggestions={showSuggestions}
+      />
+    );
+  };
+
+  onKeyDown = e => {
+    console.log('hello')
+    const { inputName } = this.state.values;
+    const { activeSuggestion, filteredSuggestions } = this.state.autoComplete;
+    if (e.keyCode === 13) {
+      this.setState(prevState => ({
+        autoComplete: {
+          ...prevState.autoComplete,
+          activeSuggestion: 0,
+          showSuggestions: false,
+          userInput: filteredSuggestions[activeSuggestion]
+        },
+        values: {
+          ...prevState.values,
+          [inputName]: filteredSuggestions[activeSuggestion]
+        }
+      }));
+    } else if (e.keyCode === 38) {
+      if (activeSuggestion === 0) {
+        return;
+      }
+      this.setState(prevState => ({
+        autoComplete: {
+          ...prevState.autoComplete,
+          activeSuggestion: activeSuggestion - 1
+        }
+      }));
+    } else if (e.keyCode === 40) {
+      if (activeSuggestion - 1 === filteredSuggestions.length) {
+        return;
+      }
+      this.setState(prevState => ({
+        autoComplete: {
+          ...prevState.autoComplete,
+          activeSuggestion: activeSuggestion + 1
+        }
+      }));
+    }
   };
 
   removeForm = (index, value) => {
-    const { values, empty } = this.state;
+    const { values, validateValues } = this.state;
     const removeForm = values[value].filter((_, id) => id !== index);
-    const keys = Object.keys(empty);
-    const removeItem = keys.filter((value, _) => value.split("-")[1] != index);
-    console.log(removeItem);
-    this.setState({
-      values: {
-        ...values,
-        [value]: removeForm
-      }
+    Object.keys(validateValues).map((val, _) => {
+      return delete validateValues[`${val.split("-")[0]}-${removeForm.length}`];
     });
+    this.setState(
+      prevState => ({
+        index: prevState.index - 1,
+        values: {
+          ...prevState.values,
+          [value]: removeForm
+        },
+        validateValues: {
+          ...prevState.validateValues,
+          ...validateValues
+        }
+      }),
+      this.canSubmit()
+    );
   };
 
   shouldMarkError = field => {
-    const errors = this.state.empty;
-    const hasError = errors[field];
-    const shouldShow = this.state.touched;
-    return hasError ? shouldShow : false;
+    const { empty, touched } = this.state;
+    return empty[field] ? touched : false;
   };
 
   render() {
@@ -156,7 +280,10 @@ class Handlers extends Component {
       handleSubmit: this.handleSubmit,
       addForm: this.addForm,
       removeForm: this.removeForm,
-      shouldMarkError: this.shouldMarkError
+      shouldMarkError: this.shouldMarkError,
+      handleAutocomplete: this.handleAutocomplete,
+      onKeyDown: this.onKeyDown,
+      ShowSuggestionsDropDown: this.ShowSuggestionsDropDown
     });
   }
 }

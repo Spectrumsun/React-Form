@@ -11,11 +11,12 @@ const Input = ({
   inputClass,
   autoComplete,
   divClass,
-  dataid,
+  dataId,
   id,
   checked,
   errorMessage,
-  onBlur
+  onBlur,
+  onKeyDown
 }) => (
   <div className={divClass}>
     <label>{label}</label>
@@ -25,12 +26,13 @@ const Input = ({
       type={type}
       value={value}
       onChange={onChange}
-      data-id={dataid}
+      data-id={dataId}
       onBlur={onBlur}
       autoComplete={autoComplete || `off`}
       className={inputClass}
       placeholder={placeholder}
       checked={checked}
+      onKeyDown={onKeyDown}
     />
     <span className="error">{inputClass && inputClass.includes('error') ? errorMessage : ''}</span>
   </div>
